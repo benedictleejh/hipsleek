@@ -2500,7 +2500,7 @@ let strquote s = "\"" ^ s ^ "\""
 let norm_file_name str =
   let str_bytes = Bytes.of_string str in
   for i = 0 to (Bytes.length str_bytes) - 1 do
-    if Bytes.get str_bytes i = '.' || Bytes.get str_bytes i = '/' then str_bytes.[i] <- '_'
+    if Bytes.get str_bytes i = '.' || Bytes.get str_bytes i = '/' then Bytes.set str_bytes i '_'
   done;
   Bytes.to_string str_bytes
 
