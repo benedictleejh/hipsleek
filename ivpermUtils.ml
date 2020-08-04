@@ -30,7 +30,7 @@ let empty_vperm_sets = {
   vperm_frac_vars = [];
 }
 
-let is_empty_vperm_sets vps = 
+let is_empty_vperm_sets vps =
   not (!Globals.ann_vp) ||
   ((is_empty vps.vperm_full_vars) &&
    (is_empty vps.vperm_lend_vars) &&
@@ -56,12 +56,12 @@ let create_vperm_sets ann svl =
 (*     vperm_lend_vars = diff lend_vars full_vars;                 *)
 (*     vperm_zero_vars = diff zero_vars (full_vars @ lend_vars); } *)
 
-let rec merge_vperm_sets vps_list = 
+let rec merge_vperm_sets vps_list =
   match vps_list with
   | [] -> empty_vperm_sets
   | v::vs ->
     let mvs = merge_vperm_sets vs in
-    let mvs = 
+    let mvs =
       { vperm_zero_vars = v.vperm_zero_vars @ mvs.vperm_zero_vars;
         vperm_lend_vars = v.vperm_lend_vars @ mvs.vperm_lend_vars;
         vperm_value_vars = v.vperm_value_vars @ mvs.vperm_value_vars;
@@ -69,30 +69,29 @@ let rec merge_vperm_sets vps_list =
         vperm_frac_vars = v.vperm_frac_vars @ mvs.vperm_frac_vars; }
     in (* norm_vperm_sets *) mvs
 
-let rec vperm_sets_of_anns ann_list = 
+let rec vperm_sets_of_anns ann_list =
   match ann_list with
   | [] -> empty_vperm_sets
   | (ann, sv)::vs ->
     let mvs = vperm_sets_of_anns vs in
     match ann with
-    | VP_Zero -> { mvs with vperm_zero_vars = sv::mvs.vperm_zero_vars; } 
-    | VP_Full -> { mvs with vperm_full_vars = sv::mvs.vperm_full_vars; } 
-    | VP_Value -> { mvs with vperm_value_vars = sv::mvs.vperm_value_vars; } 
-    | VP_Lend -> { mvs with vperm_lend_vars = sv::mvs.vperm_lend_vars; } 
-    | VP_Frac frac -> 
-      let frac_vps, others = List.partition (fun (fr, _) -> 
+    | VP_Zero -> { mvs with vperm_zero_vars = sv::mvs.vperm_zero_vars; }
+    | VP_Full -> { mvs with vperm_full_vars = sv::mvs.vperm_full_vars; }
+    | VP_Value -> { mvs with vperm_value_vars = sv::mvs.vperm_value_vars; }
+    | VP_Lend -> { mvs with vperm_lend_vars = sv::mvs.vperm_lend_vars; }
+    | VP_Frac frac ->
+      let frac_vps, others = List.partition (fun (fr, _) ->
           Frac.eq_frac frac fr) mvs.vperm_frac_vars in
       let m_frac_vps = List.concat (List.map snd frac_vps) in
       { mvs with vperm_frac_vars = (frac, sv::m_frac_vps)::others; }
 
-let subst_f f sst vps = 
+let subst_f f sst vps =
   let f_list vl = List.map (fun v -> f sst v) vl in
-  { vps with
-    vperm_zero_vars = f_list vps.vperm_zero_vars;
+  { vperm_zero_vars = f_list vps.vperm_zero_vars;
     vperm_lend_vars = f_list vps.vperm_lend_vars;
     vperm_value_vars = f_list vps.vperm_value_vars;
     vperm_full_vars = f_list vps.vperm_full_vars;
-    vperm_frac_vars = List.map (fun (frac, vl) -> (frac, f_list vl)) vps.vperm_frac_vars; } 
+    vperm_frac_vars = List.map (fun (frac, vl) -> (frac, f_list vl)) vps.vperm_frac_vars; }
 
-let vp_apply_one sst vps = 
+let vp_apply_one sst vps =
   subst_f v_apply_one sst vps
