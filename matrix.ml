@@ -141,7 +141,7 @@ let extract_answer input =
     | [] -> false
   in
   let extract_anwer_helper line =
-    let sum = List.fold_left (fun r i -> r+.i) 0. line in
+    (* let sum = List.fold_left (fun r i -> r+.i) 0. line in *)
     let last = List.nth line ((List.length line)-1) in
     if has_solution line && is_int last
     then
@@ -171,4 +171,4 @@ let solve_equation input =
 let solve_equation input =
   let pr1 = pr_list (pr_list string_of_int) in
   let pr2 = pr_list (pr_pair string_of_int string_of_int) in
-  Debug.no_1 "solve_equation" pr1 pr2 solve_equation input 
+  Debug.no_1 "solve_equation" pr1 pr2 solve_equation input
