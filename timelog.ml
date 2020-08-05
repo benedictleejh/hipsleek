@@ -8,14 +8,14 @@ let trace_timer = false
 class timelog =
   object (self)
     val time_stk = new Gen.stack_noexc "time_stk" ("dummy",0.) (pr_pair pr_id string_of_float) (==)
-    val hist_big = new Gen.stack_pr "hist-blg" (pr_pair pr_id string_of_float) (==) 
-    val hist_stk = new Gen.stack_pr "hist-stk" (pr_pair pr_id string_of_float) (==) 
+    val hist_big = new Gen.stack_pr "hist-blg" (pr_pair pr_id string_of_float) (==)
+    val hist_stk = new Gen.stack_pr "hist-stk" (pr_pair pr_id string_of_float) (==)
     (* (fun (s,x) ->  s="kill" || x>=0.5 ) *)
     val stk_t = new Gen.stack_noexc "stk_t" 0. string_of_float (==)
-    val mutable last_time = 0. 
+    val mutable last_time = 0.
     val mutable last_timeout_flag = false
     val mutable timer_val = None
-    val mutable timer_timeout_flag = false 
+    val mutable timer_timeout_flag = false
     val mutable last_big = None
     (* method print_timer = "unsure" *)
     (* add_str "timer status" (pr_pair string_of_float (pr_option string_of_int)) (timer,timer_exc) *)
@@ -28,9 +28,10 @@ class timelog =
     method timer_stop pno s =
       begin
         (* timer_timeout <- false; *)
-        if trace_timer then print_endline_quiet ("inside timer_stop "^pno); 
-        let r = stk_t # pop_top_no_exc in
-        if stk_t # is_empty then 
+        if trace_timer then print_endline_quiet ("inside timer_stop "^pno);
+        (* let r = stk_t # pop_top_no_exc in *)
+        let _ = stk_t # pop_top_no_exc in
+        if stk_t # is_empty then
           (if timer_val==None then timer_val <- Some s)
         else () (* is it important to output Stop msg? message? *)
             (* print_endline_quiet "Nested Timer(stop)" *)
@@ -39,22 +40,23 @@ class timelog =
       begin
         if trace_timer then print_endline_quiet ("inside timer_timeout "^pno);
         timer_timeout_flag <- true;
-        let r = stk_t # pop_top_no_exc in
-        if stk_t # is_empty then 
+        (* let r = stk_t # pop_top_no_exc in *)
+        let _ = stk_t # pop_top_no_exc in
+        if stk_t # is_empty then
           (if timer_val==None then timer_val <- Some s)
         else print_endline_quiet "Nested Timer(timeout)"
       end
-    method start_time s = 
+    method start_time s =
       let t = Gen.Profiling.get_main_time() in
       let () = time_stk # push (s,t) in
       ()
 
     method add_proof_info new_s no =
-      if trace_timer then 
+      if trace_timer then
         print_endline_quiet ("inside add_proof_info "^new_s^" "^no);
       match last_big with
       | None -> ()
-      | Some(s,t,slk_no) -> 
+      | Some(s,t,slk_no) ->
         begin
           if trace_timer then print_endline_quiet "adding last_big";
           let to_flag = timer_timeout_flag in
@@ -66,9 +68,9 @@ class timelog =
         end
 
 
-    method stop_time = 
+    method stop_time =
       begin
-        let (s,tt) = 
+        let (s,tt) =
           match timer_val with
           | Some t2 ->
             begin
@@ -88,24 +90,24 @@ class timelog =
             last_big <- Some (s,tt,(string_of_int slkno))
           end
         else hist_stk # push (s,tt);
-        last_time <- tt ; 
-        last_timeout_flag <- timer_timeout_flag; 
+        last_time <- tt ;
+        last_timeout_flag <- timer_timeout_flag;
         tt
       end
-    method dump = 
-      let prL = (pr_list (fun (_,f) -> string_of_float f)) in
+    method dump =
+      (* let prL = (pr_list (fun (_,f) -> string_of_float f)) in *)
       let prL2 = (pr_list (pr_pair pr_id string_of_float)) in
       let prL = prL2 in
-      let c = hist_stk # len in
+      (* let c = hist_stk # len in *)
       let ls = List.rev (hist_stk # get_stk) in
       let bigger = List.rev (hist_big # get_stk) in
       let (big,small) = List.partition (fun (_,x) -> x>=(!time_limit_large)) ls in
       (* let (bigger,big) = List.partition (fun (_,x) -> x>=5.0) big in *)
       let s_big = string_of_int (List.length big) in
       let s_bigger = string_of_int (List.length bigger) in
-      let b = List.fold_left (fun c (_,x1) -> c +. x1) 0. big in 
-      let bb = List.fold_left (fun c (_,x1) -> c +. x1) 0. bigger in 
-      let s = List.fold_left (fun c (_,x1) -> c +. x1)  0. small in 
+      let b = List.fold_left (fun c (_,x1) -> c +. x1) 0. big in
+      let bb = List.fold_left (fun c (_,x1) -> c +. x1) 0. bigger in
+      let s = List.fold_left (fun c (_,x1) -> c +. x1)  0. small in
       (* let (small_mona,small_others) = List.partition (fun (e,x) -> x>=!time_limit_large) ls in *)
       if (not (!Globals.web_compile_flag || !Globals.print_min)) then Debug.info_hprint (add_str "log(small)" (pr_pair string_of_float string_of_int )) (s,List.length small) no_pos;
       let tl_str = string_of_float (!time_limit_large) in
@@ -119,7 +121,7 @@ class timelog =
     method get_last_time =
       last_time
 
-    method get_last_timeout = 
+    method get_last_timeout =
       last_timeout_flag
     method get_timeout () =
       timer_timeout_flag
@@ -149,7 +151,7 @@ let log_wrapper s logger f x  =
     logtime # add_proof_info pr no;
     res
   with e ->
-    let tt = logtime # stop_time in 
+    let tt = logtime # stop_time in
     let to_flag = logtime # get_timeout () in
     let (pr,no) = logger None tt to_flag in
     logtime # add_proof_info (pr^"*EXC*") no;
