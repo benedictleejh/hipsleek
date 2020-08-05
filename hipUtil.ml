@@ -4,7 +4,7 @@ open Gen
 (* open Basic *)
 open Globals
 
-let proc_files = new stack_noexc "proc_files" "__no_file" pr_id (fun s1 s2 -> s1=s2) 
+let proc_files = new stack_noexc "proc_files" "__no_file" pr_id (fun s1 s2 -> s1=s2)
 
 module Name =
 struct
@@ -30,8 +30,8 @@ class graph =
     (* val mutable self_rec = [] (\* those with self-recursive *\) *)
     (* val mutable self_rec_only = [] (\* those with self-recursive call only *\) *)
     (* val mutable mut_rec = [] (\* those in mutual-recursion *\) *)
-    val mutable dom = [] 
-    val mutable nodes = [] 
+    val mutable dom = []
+    val mutable nodes = []
 
     (* let pr = pr_list (pr_pair pr_id (pr_list pr_id)) *)
 
@@ -87,11 +87,11 @@ class graph =
       in
       self # add_node n
 
-    method set_sorted = 
+    method set_sorted =
       if grp==None then self # build_scc_void "get_sorted";
       sorted_flag <- true
 
-    method is_sorted = 
+    method is_sorted =
       sorted_flag
 
     method remove n  =
@@ -152,7 +152,7 @@ class graph =
         snd(List.find (fun (a,_) -> a=n) pto)
       with _ -> []
 
-    method get_trans n = 
+    method get_trans n =
       let extend xs =
         List.fold_left (fun acc x ->
             try
@@ -165,7 +165,7 @@ class graph =
       let rec aux scc acc ans =
         match scc with
         | [] -> ans
-        | xs::xss -> 
+        | xs::xss ->
           if (Gen.BList.intersect_eq (=) xs acc)==[] then aux xss acc ans
           else
             let ans = xs@ans in
@@ -203,15 +203,15 @@ class graph =
       else
         let () = y_tinfo_pp ("invoking build_scc "^s)  in
         let g = NG.create () in
-        let find_posn n = 
+        (* let find_posn n =
           let rec aux xs i =
-            match xs with 
+            match xs with
             | [] -> -1
             | x::xs -> if x=n then i else aux xs (i+1)
           in aux nodes 0 in
-        let alpha_order e1 e2 = 
+        let alpha_order e1 e2 =
           match e1,e2 with
-          | n1::_,n2::_ -> 
+          | n1::_,n2::_ ->
             let p1 = find_posn n1 in
             let p2 = find_posn n2 in
             p2-p1
@@ -235,7 +235,7 @@ class graph =
           let r = List.sort order_scc scc in
           let pr = pr_list (pr_list pr_id) in
           let () = y_binfo_hp (add_str "sort" (pr_pair pr pr)) (scc,r) in
-          r in
+        r in *)
         (* self_rec <- []; *)
         pto <- [];
         dom <- Hashtbl.fold (fun n xs acc-> n::acc) nlst [];
@@ -274,7 +274,8 @@ class graph =
         scclist
 
     method build_scc_void n  =
-      let scclist = self # build_scc n in
+      (* let scclist = self # build_scc n in *)
+      let _ = self # build_scc n in
       ()
 
     method get_scc  =
@@ -285,11 +286,11 @@ class graph =
     method get_graph  =
       match grp with
       | Some g -> g
-      | None -> 
+      | None ->
         let _ = self # build_scc "get_graph" in
         self # get_graph
 
-    method get_graph_lst = 
+    method get_graph_lst =
       Hashtbl.fold (fun n xs acc-> (n,xs)::acc) nlst []
 
     method string_of  =
@@ -298,7 +299,7 @@ class graph =
       (* let lst = (Hashtbl.fold (fun n xs acc-> (n,xs)::acc) nlst []) in *)
       let lst = self # get_graph_lst in
       let str2 = pr_list (pr_pair pr_id (pr_list pr_id)) lst in
-      let str = str^"\nGraph:"^str2 in 
+      let str = str^"\nGraph:"^str2 in
       (* print_endline_quiet *) str
   end;;
 
