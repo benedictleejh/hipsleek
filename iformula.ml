@@ -1435,8 +1435,9 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
   (* URGENT:TODO:WN:HVar *)
   | HVar (v,ls) ->
     let (v1, _) =  (subst_var s (v, Unprimed)) in
-    let lsx =  List.map (fun v -> (subst_var s (v, Unprimed))) ls in
-    HVar (v1,ls)
+    (* let lsx =  List.map (fun v -> fst (subst_var s (v, Unprimed))) ls in
+    HVar (v1,lsx) *)
+    HVar(v1, ls)
   | HRel (r, args, l) -> HRel (r, List.map (Ipure.e_apply_one s) args,l)
 
 and rename_bound_vars_x (f : formula) =
@@ -2092,7 +2093,7 @@ and float_out_min_max (f :  formula) :  formula =
       formula_base_vperm = vp;
       formula_base_flow = fl;
       formula_base_and = a;
-      formula_base_pure = p0 } as b ->
+      formula_base_pure = p0 } (* as b *) ->
     let (nh, nhpf) = float_out_heap_min_max h0 in
     let np = Ipure.float_out_pure_min_max p0 in
     Base {
@@ -3278,4 +3279,3 @@ let clear_type_info_formula (f: formula): formula =
 let clear_type_info_formula (f: formula): formula =
   let pr = !print_formula in
   Debug.no_1 "clear_type_info_formula" pr pr clear_type_info_formula f
-
