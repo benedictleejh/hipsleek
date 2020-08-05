@@ -14,17 +14,17 @@ let build_eset_of_imm_formula f =
   let emap = List.fold_left (fun acc f -> match f with
       | BForm (bf,_) ->
         (match bf with
-         | (Eq (Var (v1,_), Var (v2,_), _),_) -> 
+         | (Eq (Var (v1,_), Var (v2,_), _),_) ->
            if (is_bag_typ v1) then acc
            else EMapSV.add_equiv acc v1 v2
-         | (Eq (ex, Var (v1,_), _),_) 
-         | (Eq (Var (v1,_), ex, _),_) -> 
+         | (Eq (ex, Var (v1,_), _),_)
+         | (Eq (Var (v1,_), ex, _),_) ->
            (match conv_ann_exp_to_var ex with
             | Some (v2,_) -> EMapSV.add_equiv acc v1 v2
             | None -> acc)
-         | (SubAnn (Var (v1,_), (AConst(Mutable,_) as exp), _),_) -> (* bot *)
+         | (SubAnn (Var (v1,_), (AConst(Mutable,_) (* as exp *)), _),_) -> (* bot *)
            let v2 = mkAnnSVar Mutable in EMapSV.add_equiv acc v1 v2
-         | (SubAnn(AConst(Accs,_) as exp, Var (v1,_), _),_) -> (* top *)
+         | (SubAnn(AConst(Accs,_) (* as exp *), Var (v1,_), _),_) -> (* top *)
            let v2 = mkAnnSVar Accs in EMapSV.add_equiv acc v1 v2
          | _ -> acc)
       | _ -> acc
@@ -40,21 +40,21 @@ let int_imm_to_exp i loc =
 
 let ann_sv_lst  = (name_for_imm_sv Mutable):: (name_for_imm_sv Imm):: (name_for_imm_sv Lend)::[(name_for_imm_sv Accs)]
 
-let is_ann_const_sv sv = 
+let is_ann_const_sv sv =
   match sv with
   | SpecVar(AnnT,a,_) -> List.exists (fun an -> an = a ) ann_sv_lst
   | _                 -> false
 
-let is_ann_const_sv sv = 
+let is_ann_const_sv sv =
   Debug.no_1 "is_ann_const_sv" !print_sv (fun b -> ite b "constant" "spec var")  is_ann_const_sv sv
 
 let helper_is_const_ann_sv em sv test =
   let imm_const_sv = mkAnnSVar test in
   if not (is_ann_typ sv) then false
   else if eq_spec_var sv imm_const_sv then true
-  else EMapSV.is_equiv em sv imm_const_sv 
+  else EMapSV.is_equiv em sv imm_const_sv
 
-let is_mut_sv ?emap:(em=[])  sv = helper_is_const_ann_sv em sv Mutable 
+let is_mut_sv ?emap:(em=[])  sv = helper_is_const_ann_sv em sv Mutable
 
 let is_imm_sv ?emap:(em=[])  sv = helper_is_const_ann_sv em sv Imm
 
@@ -62,7 +62,7 @@ let is_lend_sv ?emap:(em=[]) sv = helper_is_const_ann_sv em sv Lend
 
 let is_abs_sv ?emap:(em=[])  sv = helper_is_const_ann_sv em sv Accs
 
-let is_imm_const_sv ?emap:(em=[])  sv = 
+let is_imm_const_sv ?emap:(em=[])  sv =
   (is_abs_sv ~emap:em sv) ||   (is_mut_sv ~emap:em sv) ||   (is_lend_sv ~emap:em sv) ||   (is_imm_sv ~emap:em sv)
 
 let get_imm_list ?loc:(l=no_pos) list =
@@ -71,7 +71,7 @@ let get_imm_list ?loc:(l=no_pos) list =
   let anns_exp =  (AConst(Mutable,l))::(AConst(Imm,l))::(AConst(Lend,l))::[(AConst(Accs,l))] in
   let anns = List.combine anns_ann anns_exp in
   let lst = List.combine elem_const anns in
-  let imm = 
+  let imm =
     try
       Some (snd (List.find (fun (a,_) -> EMapSV.mem a list  ) lst ) )
     with Not_found -> None
@@ -86,43 +86,43 @@ let get_imm_emap ?loc:(l=no_pos) sv emap =
 
 let get_imm_emap_exp_opt  ?loc:(l=no_pos) sv emap : exp option = map_opt snd (get_imm_emap ~loc:l sv emap)
 
-let get_imm_emap_exp  ?loc:(l=no_pos) sv emap : exp  = 
+let get_imm_emap_exp  ?loc:(l=no_pos) sv emap : exp  =
   map_opt_def (mkVar sv l) (fun x -> x) (get_imm_emap_exp_opt ~loc:l sv emap)
 
 let get_imm_emap_ann_opt  ?loc:(l=no_pos) sv emap : ann option = map_opt fst (get_imm_emap ~loc:l sv emap)
 
-let get_imm_from_pure_ann_opt  ?loc:(l=no_pos) sv pure : ann option =  
+let get_imm_from_pure_ann_opt  ?loc:(l=no_pos) sv pure : ann option =
   let emap = build_eset_of_imm_formula pure in
-  get_imm_emap_ann_opt  ~loc:l sv emap 
+  get_imm_emap_ann_opt  ~loc:l sv emap
 
 let get_imm_from_pure_ann_list  ?loc:(l=no_pos) sv pure : ann list =
   map_opt_def [] (fun x -> [x]) (get_imm_from_pure_ann_opt  ~loc:l sv pure)
 
 (* replace with imm constant, where exp is constant or variable *)
-let norm_emap_imm_exp  ?loc:(l=no_pos) (e: exp) emap : exp  = 
+let norm_emap_imm_exp  ?loc:(l=no_pos) (e: exp) emap : exp  =
   match e with
   | Var(sv,l) ->  get_imm_emap_exp ~loc:l sv emap
   | _ -> e
 
 (* replace with imm constant, where a is constant or variable *)
-let norm_emap_imm  (a: ann) emap : ann  = 
+let norm_emap_imm  (a: ann) emap : ann  =
   match a with
   | ConstAnn _ -> a
   | PolyAnn sv -> map_opt_def a (fun x -> x) (get_imm_emap_ann_opt sv emap)
   | _ -> a
 
 
-let eq_const_ann const_imm em sv = 
+let eq_const_ann const_imm em sv =
   match const_imm with
   | Mutable -> is_mut_sv ~emap:em sv
   | Imm     -> is_imm_sv ~emap:em sv
   | Lend    -> is_lend_sv ~emap:em sv
   | Accs    -> is_abs_sv ~emap:em sv
 
-let helper_is_const_imm em (imm:ann) const_imm = 
+let helper_is_const_imm em (imm:ann) const_imm =
   match imm with
   | ConstAnn a -> a == const_imm
-  | PolyAnn sv -> eq_const_ann const_imm em sv 
+  | PolyAnn sv -> eq_const_ann const_imm em sv
   | _ -> false
 
 (* below functions take into account the alias information while checking if imm is a certain const. *)
@@ -131,7 +131,7 @@ let is_abs_exp ?emap:(em=[]) (e: exp) = is_abs ~emap:em (exp_to_imm e)
 
 let is_abs_list ?emap:(em=[]) imm_list = List.for_all (is_abs ~emap:em) imm_list
 
-let is_mutable ?emap:(em=[]) (imm:ann) = helper_is_const_imm em imm Mutable 
+let is_mutable ?emap:(em=[]) (imm:ann) = helper_is_const_imm em imm Mutable
 
 let is_mutable_list ?emap:(em=[]) imm_list =  List.for_all (is_mutable ~emap:em) imm_list
 
@@ -151,12 +151,12 @@ let isMutable(a : ann) : bool = is_mutable a
 
 let isImm(a : ann) : bool = is_immutable a
 
-let isPoly(a : ann) : bool = 
+let isPoly(a : ann) : bool =
   match a with
   | PolyAnn v -> true
   | _ -> false
 
-let isNoAnn(a : ann) : bool = 
+let isNoAnn(a : ann) : bool =
   match a with
   | NoAnn -> true
   | _ -> false
@@ -188,7 +188,7 @@ let gen_subtype emap imm1 imm2 test_fnc =
     | _ -> None
   else None
 
-let strict_subtype emap imm1 imm2 = 
+let strict_subtype emap imm1 imm2 =
   let res = gen_subtype emap imm1 imm2 (fun a b -> a < b) in
   map_opt_def false (fun x -> x) res
 
@@ -196,14 +196,14 @@ let simple_subtype emap imm1 imm2 =
   let res = gen_subtype emap imm1 imm2 (fun a b -> a <= b) in
   map_opt_def true (fun x -> x) res
 
-(* norm of imml = max(immr1,immr2) 
+(* norm of imml = max(immr1,immr2)
    @A = max(immr1,@M)  ----> immr1 = @A
    @M = max(immr1,@A)  ----> false
 
  *)
-let norm_eqmax emap imml immr1 immr2 def = 
+let norm_eqmax emap imml immr1 immr2 def =
   let immr1, immr2 = norm_emap_imm immr1 emap, norm_emap_imm immr2 emap in
-  if not (is_const_imm ~emap:emap imml) then 
+  if not (is_const_imm ~emap:emap imml) then
     match immr1, immr2 with
     | (ConstAnn Accs), v2
     | v2, (ConstAnn Accs) -> mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp (ConstAnn Accs) no_pos) no_pos)
@@ -211,28 +211,28 @@ let norm_eqmax emap imml immr1 immr2 def =
   else
     match immr1, immr2 with
     | ((ConstAnn a) as v1), v2
-    | v2, ((ConstAnn a) as v1) -> 
-        if (strict_subtype emap imml v1) then 
+    | v2, ((ConstAnn a) as v1) ->
+        if (strict_subtype emap imml v1) then
           let () = report_warning no_pos ("creating false ctx during max norm)" ) in
           mkFalse no_pos
-        else if not(helper_is_const_imm emap imml a) then 
-          mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp v2 no_pos) no_pos) 
+        else if not(helper_is_const_imm emap imml a) then
+          mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp v2 no_pos) no_pos)
         else def
     | _ -> def
 
-let norm_eqmax emap imml immr1 immr2 def = 
+let norm_eqmax emap imml immr1 immr2 def =
   if not(!Globals.imm_add)  then def
   else  norm_eqmax emap imml immr1 immr2 def
 
-(* norm of imml = min(immr1,immr2) 
+(* norm of imml = min(immr1,immr2)
    imml = min(immr1,@M)  ----> imml = @M
    @L = min(immr1,@M)    ----> false
    @M = min(immr1,@L)    ----> immr1=@M
 
  *)
-let norm_eqmin emap imml immr1 immr2 def = 
+let norm_eqmin emap imml immr1 immr2 def =
   let immr1, immr2 = norm_emap_imm immr1 emap, norm_emap_imm immr2 emap in
-  if not (is_const_imm ~emap:emap imml) then 
+  if not (is_const_imm ~emap:emap imml) then
     match immr1, immr2 with
     | (ConstAnn Mutable), v2
     | v2, (ConstAnn Mutable) -> mkPure (mkEq (imm_to_exp imml no_pos) (imm_to_exp (ConstAnn Mutable) no_pos) no_pos)
@@ -240,16 +240,16 @@ let norm_eqmin emap imml immr1 immr2 def =
   else
     match immr1, immr2 with
     | ((ConstAnn a) as v1), v2
-    | v2, ((ConstAnn a) as v1) -> 
-        if (strict_subtype emap v1 imml) then 
+    | v2, ((ConstAnn a) as v1) ->
+        if (strict_subtype emap v1 imml) then
           let () = report_warning no_pos ("creating false ctx during min norm)" ) in
           mkFalse no_pos
-        else if not(helper_is_const_imm emap imml a) then 
+        else if not(helper_is_const_imm emap imml a) then
           mkPure (mkEq (imm_to_exp v2 no_pos) (imm_to_exp imml no_pos) no_pos)
         else def
     | _ -> def
 
-let norm_eqmin emap imml immr1 immr2 def = 
+let norm_eqmin emap imml immr1 immr2 def =
   if not(!Globals.imm_add)  then def
   else  norm_eqmin emap imml immr1 immr2 def
 
@@ -266,8 +266,8 @@ let get_imm_var_cts_operands e =
 let get_imm_var_cts_operands e =
   Debug.no_1 "get_imm_var_cts_operands" !print_exp !print_svl get_imm_var_cts_operands e
 
-let mkAdd_list exp_lst =  
-  let rec helper exp_lst = 
+let mkAdd_list exp_lst =
+  let rec helper exp_lst =
     match exp_lst with
     | [] -> AConst (Accs, no_pos)
     | [(AConst _ as e)]
@@ -275,10 +275,10 @@ let mkAdd_list exp_lst =
     | e::tail -> Add(e, helper tail, no_pos)
   in helper exp_lst
 
-let sv_to_imm_exp_flag_change sv emap loc = 
+let sv_to_imm_exp_flag_change sv emap loc =
   let return_same_sv = (mkVar sv loc, true) in
   if is_ann_const_sv sv then (get_imm_emap_exp ~loc:loc sv emap, true)
-  else 
+  else
     let ne = get_imm_emap_exp_opt ~loc:loc sv emap in
     map_opt_def return_same_sv (fun x -> (x,false)) ne
 
@@ -286,7 +286,7 @@ let sv_to_imm_exp_flag_change sv emap loc =
 let imm_summation emap e =
 
   (* retrieve addition operands - constanst or sv only *)
-  let sum_operands = get_imm_var_cts_operands e in 
+  let sum_operands = get_imm_var_cts_operands e in
 
   (* replace vars with their corresponding constants if this info exists in emap *)
   let sum_operands = List.map (fun sv -> sv_to_imm_exp_flag_change sv emap (pos_of_exp e)) sum_operands in
@@ -312,7 +312,7 @@ let norm_eq_add lhs_exp emap e l =
   (* let new_var  = f_e emap (Var(sv,lv)) in *) (* without this we might have false ctx: eg b=@L  & b=@A+@M*)
   (* let new_var = Var(lhs_sv,lhs_l) in *)
   let new_sum, fixpt = imm_summation emap e in
-  let new_eq rhs = Eq (lhs_exp, rhs, l) in 
+  let new_eq rhs = Eq (lhs_exp, rhs, l) in
   let new_pf = map_opt_def  (BConst (false, l)) (fun x -> new_eq x) new_sum in
   (new_pf, fixpt)
 
@@ -331,7 +331,7 @@ let simplify_imm_addition emap0 (f:formula) =
   let fixpt = ref true in
 
   let f_b_ann_exp_check exp lbl f_op l  =
-    if is_ann_type (get_exp_type exp) then 
+    if is_ann_type (get_exp_type exp) then
       let new_pf, fixpt0 = f_op l in
       let () = if not(fixpt0) then fixpt:= false in
       Some (new_pf, lbl)
@@ -345,8 +345,8 @@ let simplify_imm_addition emap0 (f:formula) =
       let (p_f, lbl) = bf in
       match p_f with
       (* | Eq ((Add(e11,e12,la1) as ea1, (Add(e21,e22,la2) as ea2), l)  *)
-      | Eq (exp, (Add(e1,e2,la) as ea), l) 
-      | Eq ( (Add(e1,e2,la) as ea), exp, l) -> 
+      | Eq (exp, (Add(e1,e2,la) as ea), l)
+      | Eq ( (Add(e1,e2,la) as ea), exp, l) ->
         let f_eq l = norm_eq_add exp emap ea l in
         f_b_ann_exp_check exp lbl f_eq l
       | SubAnn (Var(sv,lv), (Add(e1,e2,la) as ea), l) ->
@@ -356,7 +356,7 @@ let simplify_imm_addition emap0 (f:formula) =
         let f_subann l = norm_subann_add (fun x -> mk_SubAnn_4Add la x (Var(sv,lv)) ) emap ea l in
         f_b_ann_exp_check (Var(sv,lv)) lbl f_subann l
       | _ -> None
-    in 
+    in
     let fb = transform_b_formula (f_b_helper, somef) fb in
     fb
   in
@@ -365,7 +365,7 @@ let simplify_imm_addition emap0 (f:formula) =
     let pr1 = EMapSV.string_of in
     let pr2 = !print_b_formula in
     Debug.no_2 "f_b_imm_addition" pr1 pr2 pr2 f_b emap fb in
- 
+
   let rec f_f emap f =
     match f with
     | BForm (b1,b2) ->  Some (BForm (f_b emap b1, b2))
@@ -383,7 +383,7 @@ let simplify_imm_addition emap0 (f:formula) =
   in
 
   let fncs = (f_f, somef2, somef2) in
-  let rec helper form = 
+  let rec helper form =
     let () = fixpt := true in
     let emap = build_eset_of_imm_formula form in
     let emap = EMapSV.merge_eset emap emap0 in
@@ -392,7 +392,7 @@ let simplify_imm_addition emap0 (f:formula) =
     let new_form = map_formula_arg form emap fncs (idf2, idf2, idf2) in
     (* let () = fixpt:=(equalFormula form new_form) in *) (* using equalFormula leads to loop *)
     if not(!fixpt) then helper new_form else new_form
-  in 
+  in
   let helper form =
     let pr = !print_formula in
     Debug.no_1 "helper_simplify" pr pr helper form in
@@ -554,4 +554,3 @@ let prune_eq_min_max_imm f =
   Debug.no_1 "prune_eq_min_max_imm" pr pr prune_eq_min_max_imm f
 
 (* ===================== END imm addition utils ========================= *)
-
