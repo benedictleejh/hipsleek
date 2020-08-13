@@ -1629,12 +1629,12 @@ let extract_mut_args prog proc=
     (fun _ -> extract_mut_args_x prog proc) proc
 
 let genESpec_wNI body_header body_opt args ret pos=
-  let print_gen_spec ss unk_hps=
+  (* let print_gen_spec ss unk_hps=
     let () = print_endline_quiet "\nHeap Predicate Declarations" in
     let () = List.iter (fun hpdcl -> print_endline_quiet (!print_hp_decl hpdcl)) unk_hps in
     let () = Debug.ninfo_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
     ()
-  in
+  in *)
   let trans_htrue2emp hf=
     match hf with
     | F.HTrue -> F.HEmp
@@ -2117,8 +2117,8 @@ and collect_data_view_from_h_formula_x (h0 : F.h_formula) (data_decls: data_decl
     let pos = h.F.h_formula_star_pos in
     let dl1, vl1, henv = collect_data_view_from_h_formula h1 data_decls henv in
     let dl2, vl2, henv = collect_data_view_from_h_formula h2 data_decls henv in
-    let d1 = List.length (dl1 @ vl1) in
-    let d2 = List.length (dl2 @ vl2) in
+    (* let d1 = List.length (dl1 @ vl1) in
+    let d2 = List.length (dl2 @ vl2) in *)
     if false (* d1>0 & d2>0 *) then
       let msg = "self occurs as heap nodes multiple times in one branch" in
       report_error pos msg
@@ -2132,8 +2132,8 @@ and collect_data_view_from_h_formula_x (h0 : F.h_formula) (data_decls: data_decl
     let pos =  h.F.h_formula_phase_pos in
     let dl1, vl1, henv = collect_data_view_from_h_formula h1 data_decls henv in
     let dl2, vl2, henv = collect_data_view_from_h_formula h2 data_decls henv in
-    let d1 = List.length (dl1 @ vl1) in
-    let d2 = List.length (dl2 @ vl2) in
+    (* let d1 = List.length (dl1 @ vl1) in
+    let d2 = List.length (dl2 @ vl2) in *)
     if false (* d1>0 & d2>0 *) then
       let msg = "self occurs as heap nodes multiple times in one branch" in
       report_error pos msg
@@ -2147,8 +2147,8 @@ and collect_data_view_from_h_formula_x (h0 : F.h_formula) (data_decls: data_decl
     let pos = h.F.h_formula_conj_pos in
     let dl1, vl1, henv = collect_data_view_from_h_formula h1 data_decls henv in
     let dl2, vl2, henv = collect_data_view_from_h_formula h2 data_decls henv in
-    let d1 = List.length (dl1 @ vl1) in
-    let d2 = List.length (dl2 @ vl2) in
+    (* let d1 = List.length (dl1 @ vl1) in
+    let d2 = List.length (dl2 @ vl2) in *)
     if false (* d1>0 & d2>0 *) then
       let msg = "self occurs as heap nodes multiple times in one branch" in
       report_error pos msg
@@ -2281,7 +2281,7 @@ and find_data_view_x (vdecl: view_decl) (data_decls: data_decl list) pos
         (* find type of self in the heap type env *)
         let typ, _ = get_heap_type henv self in
         let tname = string_of_typ typ in
-        let todo_unknown = x_add look_up_data_def_raw data_decls tname in
+        let _ = x_add look_up_data_def_raw data_decls tname in
         ([tname], el)
       with Not_found ->
         ([], el)
@@ -2406,7 +2406,7 @@ and update_fixpt (iprog:prog_decl) (vl:(view_decl * ident list *ident list) list
   Debug.no_eff_1 "update_fixpt" [true] pr pr_unit (fun _ -> update_fixpt_x iprog vl) vl
 
 and set_check_fixpt (iprog:prog_decl) (data_decls : data_decl list) (view_decls: view_decl list)  =
-  let pr = pr_list_ln !print_data_decl in
+  (* let pr = pr_list_ln !print_data_decl in *)
   (* let pr2 = pr_list_ln !print_view_decl in  *)
   let pr2 = pr_list (fun v -> v.view_name^":"^v.view_data_name^"@") in
   Debug.no_eff_2 "set_check_fixpt" [false;true] pr_none pr2 pr_unit (fun _ _ -> set_check_fixpt_x iprog data_decls view_decls )
@@ -2716,7 +2716,7 @@ let build_hierarchy (prog : prog_decl) =
   let add_edge cdef =
     let pr cdef = cdef.data_name^"<:"^cdef.data_parent_name in
     Debug.no_1 "add_edge" pr (fun _ -> "") add_edge cdef in
-  let todo_unknown = List.map add_edge prog.prog_data_decls in
+  let _ = List.map add_edge prog.prog_data_decls in
   if TraverseCH.has_cycle class_hierarchy then begin
     print_string ("Error: Class hierarchy has cycles\n");
     failwith ("Class hierarchy has cycles\n");
@@ -2736,7 +2736,7 @@ let exists_path (c1 : ident) (c2 : ident) :bool =
   if c2="null" then true
   else
     try
-      let todo_unknown = PathCH.shortest_path class_hierarchy
+      let _ = PathCH.shortest_path class_hierarchy
           (CH.V.create {ch_node_name = c1})
           (CH.V.create {ch_node_name = c2}) in
       true
@@ -2779,7 +2779,7 @@ let inbuilt_build_exc_hierarchy () =
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
   (* build the class hierarchy *)
-  let todo_unknown = List.map (fun c-> (exlist # add_edge c.data_name c.data_parent_name)) (prog.prog_data_decls) in
+  let _ = List.map (fun c-> (exlist # add_edge c.data_name c.data_parent_name)) (prog.prog_data_decls) in
   let () = if clean then (exlist # remove_dupl ) in
   if (exlist # has_cycles) then begin
     print_string ("Error: Exception hierarchy has cycles\n");
@@ -3860,9 +3860,9 @@ let find_all_num_trailer_exp e =
 (* let fold_exp_args (e:exp) (init_a:'a) (f:'a -> exp-> 'b option) (f_args: 'a -> exp -> 'a) (comb_f: 'b list->'b) (zero:'b) : 'b = *)
 let find_all_num_trailer iprog =
   let () = x_ninfo_pp "TODO : find_all_num_trailer _nn in iprog and avoid those numbers (to solve simplify/ex3a-app-neq.ss)" no_pos in
-  let proc_list = List.filter (fun proc ->
+  (* let proc_list = List.filter (fun proc ->
       proc.proc_is_main
-    ) iprog.prog_proc_decls in
+    ) iprog.prog_proc_decls in *)
   let body_list = List.map (fun proc -> proc.proc_body) (List.filter (fun proc -> proc.proc_is_main) iprog.prog_proc_decls) in
   let id_list = List.fold_left (fun acc body ->
       let () = x_ninfo_hp (add_str "acc" (pr_list pr_id)) acc no_pos in
@@ -3956,7 +3956,7 @@ let gen_name_pairs_struc view_decls0 vname (f:F.struc_formula): (ident * ident) 
       (* then [] *)
       (* else *)
       (try
-         let todo_unk = look_up_view_def_raw x_loc view_decls0 c in [ (vname, c) ]
+         let _ = look_up_view_def_raw x_loc view_decls0 c in [ (vname, c) ]
        with | Not_found ->
          if view_scc_obj # in_dom c then [(vname,c)]
          else []
@@ -3989,5 +3989,3 @@ let swap_dir ct =
   | Left -> Right
   | Right -> Left
   | Equiv -> Equiv
-
-
