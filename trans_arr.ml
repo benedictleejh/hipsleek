@@ -46,7 +46,7 @@ let plain_string_of_exp e0 =
         (elst:exp list):string=
       List.fold_left (fun s e -> s ^"["^(string_of_exp e)^"]") "" elst
     in
-    (string_of_spec_var sv)^(string_of_index_list elst) 
+    (string_of_spec_var sv)^(string_of_index_list elst)
   | _ -> "???"
 ;;
 
@@ -222,7 +222,7 @@ let rec contain_array
     | Min (e1,e2,loc)
     | BagDiff (e1,e2,loc)
     | ListCons (e1,e2,loc)->
-      ((contain_array_exp e1) or (contain_array_exp e2))
+      ((contain_array_exp e1) || (contain_array_exp e2))
     | TypeCast (_,e1,loc)
     | ListHead (e1,loc)
     | ListTail (e1,loc)
@@ -729,10 +729,10 @@ let rec process_quantifier
 
 let process_quantifier
     (f:formula) : (formula) =
-  let pfo = function
+  (* let pfo = function
     | Some fo -> !print_pure fo
     | None -> "None"
-  in
+  in *)
   Debug.no_1 "process_quantifier" !print_pure !print_pure (fun f -> process_quantifier f) f
 ;;
 
@@ -1140,7 +1140,8 @@ let rec translate_array_relation
         then
           begin
             match (List.nth elst 0), (List.nth elst 1) with
-            | Var (SpecVar (t0,id0,p0) as old_array_sv,_), Var (SpecVar (t1,id1,p1) as new_array_sv,_) ->
+            (* | Var (SpecVar (t0,id0,p0) as old_array_sv,_), Var (SpecVar (t1,id1,p1) as new_array_sv,_) -> *)
+            | Var (SpecVar (t0,id0,p0), _), Var (SpecVar (t1,id1,p1), _) ->
               let new_array_at = ArrayAt (SpecVar (t1,id1,p1),[List.nth elst 3],no_pos) in
               let new_eq = BForm ((Eq (new_array_at,List.nth elst 2,no_pos),None),None )in
               let new_q = mk_spec_var "i" in
@@ -1319,10 +1320,10 @@ let translate_array_equality
     in
     List.fold_left (fun s item -> (string_of_item item)^" "^s) "" ts
   in
-  let pfo = function
+  (* let pfo = function
     | Some f -> !print_pure f
     | None -> "None"
-  in
+  in *)
   Debug.no_2 "translate_array_equality" !print_pure string_of_translate_scheme !print_pure (fun f scheme -> translate_array_equality f scheme) f scheme
 ;;
 
@@ -1681,7 +1682,7 @@ let rec get_array_element_in_f
       if (is_same_sv nsv sv)
       then [e]
       else []
-    | _ -> 
+    | _ ->
       (* failwith ("Trans_arr.extract_translate_scheme: "^(ArithNormalizer.string_of_exp e)^" To Be Implemented") *)
       failwith ("Trans_arr.get_array_element_in_exp: "^(string_of_exp e)^" To Be Implemented")
   in
@@ -1877,7 +1878,7 @@ let rec drop_array_formula
     | Min (e1,e2,loc)
     | BagDiff (e1,e2,loc)
     | ListCons (e1,e2,loc)->
-      ((contain_array_exp e1) or (contain_array_exp e2))
+      ((contain_array_exp e1) || (contain_array_exp e2))
     | TypeCast (_,e1,loc)
     | ListHead (e1,loc)
     | ListTail (e1,loc)
@@ -2584,10 +2585,10 @@ let instantiate_forall
         | Exists (n_sv,sub_f,fl,loc)->
               Exists(n_sv,instantiate_with_one_sv_helper sub_f sv index,fl,loc)
     in
-    let contains_arr f arr=
+    (* let contains_arr f arr=
       (* To Be Implemented *)
       true
-    in
+    in *)
     mk_and_list (List.map (fun r -> instantiate_with_one_sv_helper f sv r) env)
   in
   let instantiate_with_one_sv f sv env =
@@ -2916,7 +2917,8 @@ let rec translate_back_array_in_one_formula
                 let const = int_of_string index in
                 IConst (const,no_pos)
               with
-                Failure "int_of_string" ->
+                (* Failure "int_of_string" -> *)
+                Failure _ ->
                 let prefix_regexp = Str.regexp "PRI.*" in
                 if Str.string_match prefix_regexp index 0
                 then
@@ -3148,9 +3150,9 @@ let unchanged_fixpoint (rel:formula) (define:formula list) =
             List.fold_left (fun result rlst1 -> (List.map (fun rlst2 -> rlst1@rlst2) dres2)@result) (dres1@dres2) dres1
           | _ -> []
         in
-        let equal_unchanged (f1,t1,clst1) (f2,t2,clst2) =
+        (* let equal_unchanged (f1,t1,clst1) (f2,t2,clst2) =
           (is_same_exp f1 f2)&&(is_same_exp t1 t2)
-        in
+        in *)
         let list_of_list = List.flatten (List.map new_fun_helper flst) in
         (List.fold_left
            (fun result flst ->
