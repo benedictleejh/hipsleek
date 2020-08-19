@@ -66,6 +66,7 @@ EXTRA_TAGS = {
   "<{3234,benchmark,bin,bugs,_build,core,cparser,demo,docs,errors,examples,exists,field,guard,hoaegs,_hoaegs,hoaegs-new,html_resources,imm,infer,infinity,inline,label,LDK,lemma,list,misc,mlold,mona-1.4,omega_modified,omega_original,printing,problems,sa,sh_solver,slice,term,synlem,term,test,testing,test_proof,test_proof_backup,tests,tp-mona,tp-redlog,validate,vscomp2010,vsttecomp2012,xml,z3}/*.*>" => "-traverse"
 }
 
+require 'webrick'
 
 # Default to compiling all executables in bytecode mode
 task default: EXECUTABLES.keys
@@ -225,6 +226,15 @@ namespace :test do
         end
       end
     end
+  end
+end
+
+namespace :docs do
+  desc "Serve the documentation folder locally"
+  task :serve do
+    s = WEBrick::HTTPServer.new(:Port => 3000, :DocumentRoot => "docs")
+    trap('INT') { s.shutdown }
+    s.start
   end
 end
 
